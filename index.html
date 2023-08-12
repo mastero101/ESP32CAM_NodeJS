@@ -134,6 +134,13 @@
       console.error("Error fetching images:", error);
       alert("An error occurred while fetching images.");
     });
+
+    // Agregar evento de escucha para la tecla "Supr"
+  document.addEventListener("keydown", function(event) {
+    if (event.key === "Delete") {
+      deleteSelectedImages();
+    }
+  });
 </script>
 </body>
 </html>
