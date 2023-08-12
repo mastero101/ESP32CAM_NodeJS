@@ -25,7 +25,7 @@
 
   // Function to delete an image
   function deleteImage(imageName) {
-  fetch(`http://127.0.0.1:5001/delete?image=${imageName}`, {
+  fetch(`http://132.145.206.61:5001/delete?image=${imageName}`, {
     method: 'POST'
   })
         .then(response => response.text())
@@ -44,7 +44,7 @@
     }
 
 // Fetch images and populate the gallery
-fetch("http://127.0.0.1:5001/images")
+fetch("http://132.145.206.61:5001/images")
   .then(response => response.json())
   .then(images => {
     images.forEach(imageName => {
