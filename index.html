@@ -13,18 +13,18 @@
       margin: 10px;
       width: calc(33.33% - 20px);
     }
-    
     img {
       max-width: 100%;
-      height: auto;    
+      height: auto;
     }
-    
+    .selected {
+      border: 0.1px solid blue;
+    }
     @media (max-width: 768px) {
       .flex-container > div {
         width: calc(50% - 20px);
       }
     }
-    
     @media (max-width: 480px) {
       .flex-container > div {
         width: calc(100% - 20px);
@@ -35,36 +35,52 @@
 <body>
 <h2>ESP32-CAM Photo Gallery</h2>
 
+<button id="deleteSelected">Delete Selected</button>
+
 <div class="flex-container" id="photoGallery">
 </div>
 
 <script>
   const photoGallery = document.getElementById("photoGallery");
+  const deleteSelectedButton = document.getElementById("deleteSelected");
+  const selectedImages = new Set();
 
-  // Function to delete an image
-  function deleteImage(imageName) {
-    const shouldDelete = confirm("Are you sure you want to delete this image?");
+  // Function to delete selected images
+  function deleteSelectedImages() {
+    if (selectedImages.size === 0) {
+      alert("Please select at least one image to delete.");
+      return;
+    }
+
+    const shouldDelete = confirm("Are you sure you want to delete the selected images?");
     if (!shouldDelete) {
       return;
     }
 
-    fetch(`http://132.145.206.61:5001/delete?image=${imageName}`, {
-      method: 'POST'
-    })
-      .then(response => response.text())
-      .then(data => {
-        if (data.includes("File deleted successfully")) {
-          // Reload the page to update the gallery
-          location.reload();
-        } else {
-          alert("An error occurred while deleting the image.");
-        }
+    selectedImages.forEach(imageName => {
+      fetch(`http://132.145.206.61:5001/delete?image=${imageName}`, {
+        method: 'POST'
       })
-      .catch(error => {
-        console.error("Error deleting image:", error);
-        alert("An error occurred while deleting the image.");
-      });
+        .then(response => response.text())
+        .then(data => {
+          if (data.includes("File deleted successfully")) {
+            // Remove the deleted image from the selected set
+            selectedImages.delete(imageName);
+
+            // Reload the page to update the gallery
+            location.reload();
+          } else {
+            alert("An error occurred while deleting the images.");
+          }
+        })
+        .catch(error => {
+          console.error("Error deleting images:", error);
+          alert("An error occurred while deleting the images.");
+        });
+    });
   }
+
+  deleteSelectedButton.addEventListener("click", deleteSelectedImages);
 
   // Fetch images and populate the gallery
   fetch("http://132.145.206.61:5001/images")
@@ -73,12 +89,23 @@
       images.forEach(imageName => {
         const div = document.createElement("div");
         const p = document.createElement("p");
-        const deleteButton = document.createElement("button"); // Create a button instead of a link
-        const imageLink = document.createElement("a");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox"; // Set input type to checkbox
         const img = document.createElement("img");
 
-        deleteButton.textContent = "Delete"; // Set button text
-        deleteButton.addEventListener("click", () => deleteImage(imageName)); // Add click event listener
+        // Function to toggle selection
+        function toggleSelection() {
+          if (selectedImages.has(imageName)) {
+            selectedImages.delete(imageName);
+            div.classList.remove("selected");
+          } else {
+            selectedImages.add(imageName);
+            div.classList.add("selected");
+          }
+        }
+
+        // Add click event listener to the checkbox
+        checkbox.addEventListener("click", toggleSelection);
 
         const timestampPart = imageName.split("_")[0];
         const formattedTimestamp = timestampPart
@@ -90,18 +117,15 @@
           .replace("T", " - ")
           .slice(0, -4);
 
-        p.appendChild(deleteButton); // Append the button instead of the delete link
+        p.appendChild(checkbox); // Append the checkbox
         p.appendChild(document.createTextNode(` - ${formattedTimestamp}`));
 
-        imageLink.href = "/uploads/" + imageName;
-        imageLink.appendChild(img);
         img.src = "/uploads/" + imageName;
-        img.style.width = "350px";
         img.alt = "";
         img.title = "";
 
         div.appendChild(p);
-        div.appendChild(imageLink);
+        div.appendChild(img);
 
         photoGallery.appendChild(div);
       });
