@@ -73,16 +73,31 @@ server.on('request', (req, res) => {
       }
     });
   } else if (pathName === '/delete' && req.method.toLowerCase() === 'post') {
-    const imageName = parsedUrl.query.image;
-    const imagePath = `uploads/${imageName}`;
+    let requestBody = '';
+    req.on('data', chunk => {
+      requestBody += chunk.toString();
+    });
 
-    fs.unlink(imagePath, (err) => {
-      if (err) {
-        res.writeHead(500, { 'Content-Type': 'text/plain' });
-        res.end('Internal Server Error');
-      } else {
+    req.on('end', () => {
+      try {
+        const imageNames = JSON.parse(requestBody);
+
+        // Iterate through the array of image names and delete each image
+        imageNames.forEach(imageName => {
+          const imagePath = `uploads/${imageName}`;
+          fs.unlink(imagePath, err => {
+            if (err) {
+              console.error("Error deleting image:", err);
+            }
+          });
+        });
+
         res.writeHead(200, { 'Content-Type': 'text/plain' });
-        res.end('File deleted successfully');
+        res.end('Images deleted successfully');
+      } catch (error) {
+        console.error("Error parsing request body:", error);
+        res.writeHead(400, { 'Content-Type': 'text/plain' });
+        res.end('Bad Request');
       }
     });
   } else {
