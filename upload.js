@@ -92,12 +92,12 @@ server.on('request', (req, res) => {
           });
         });
 
-        res.writeHead(200, { 'Content-Type': 'text/plain' });
-        res.end('Images deleted successfully');
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ message: 'Images deleted successfully' }));
       } catch (error) {
         console.error("Error parsing request body:", error);
-        res.writeHead(400, { 'Content-Type': 'text/plain' });
-        res.end('Bad Request');
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Bad Request' }));
       }
     });
   } else {
